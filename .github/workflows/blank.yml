@@ -22,3 +22,9 @@ jobs:
 
     - name: Listar archivos
       run: ls -la
+
+    - name: Mostrar información del sistema
+      run: |
+        echo "Sistema operativo: ${{ runner.os }}"
+        echo "Usuario de GitHub: ${{ github.actor }}"
+        echo "Repositorio: ${{ github.repository }}"
