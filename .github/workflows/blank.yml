@@ -1,0 +1,24 @@
+name: Mi Primer Workflow
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+
+    - name: Saludar
+      run: echo "¡Hola Abraham! Este es mi primer workflow"
+
+    - name: Mostrar fecha
+      run: date
+
+    - name: Listar archivos
+      run: ls -la
