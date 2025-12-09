@@ -1,0 +1,156 @@
+name: Conceptos Avanzados de SO
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # Job 1: Test and construction container
+  build-and-test:
+    name: Build en Contenedor Docker
+    runs-on: ubuntu-latest
+    
+    # Usar contenedor Docker
+    container:
+      image: node:18
+      options: --cpus 2 --memory 1g
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Instalar dependencias
+        run: |
+          echo "=== Instalando dependencias ==="
+          npm install
+          echo "=== Dependencias instaladas exitosamente ==="
+      
+      - name: Información del contenedor
+        run: |
+          echo "=== Información del Sistema en Contenedor ===" > container-info.txt
+          echo "Hostname: $(hostname)" >> container-info.txt
+          echo "Node version: $(node --version)" >> container-info.txt
+          echo "NPM version: $(npm --version)" >> container-info.txt
+          echo "Sistema Operativo: $(uname -a)" >> container-info.txt
+          echo "Memoria disponible:" >> container-info.txt
+          free -h >> container-info.txt
+          echo "CPU Info:" >> container-info.txt
+          lscpu | grep "Model name" >> container-info.txt
+          cat container-info.txt
+      
+      - name: Ejecutar pruebas
+        run: npm test
+      
+      - name: Upload info del contenedor
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-info
+          path: container-info.txt
+
+  # Job 2: Parallel Process
+  parallel-processing:
+    name: Gestión de Procesos Paralelos
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    strategy:
+      matrix:
+        task: [task1, task2, task3]
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Ejecutar tarea ${{ matrix.task }}
+        run: |
+          echo "=== Iniciando ${{ matrix.task }} ===" > ${{ matrix.task }}-output.txt
+          echo "Process ID: $$" >> ${{ matrix.task }}-output.txt
+          echo "Parent Process ID: $PPID" >> ${{ matrix.task }}-output.txt
+          echo "Timestamp de inicio: $(date)" >> ${{ matrix.task }}-output.txt
+          
+          # Simular procesamiento
+          echo "Procesando datos..." >> ${{ matrix.task }}-output.txt
+          sleep 5
+          
+          # Información del proceso
+          echo "Información del proceso:" >> ${{ matrix.task }}-output.txt
+          ps aux | head -n 1 >> ${{ matrix.task }}-output.txt
+          ps aux | grep $$ >> ${{ matrix.task }}-output.txt
+          
+          echo "Timestamp de fin: $(date)" >> ${{ matrix.task }}-output.txt
+          echo "=== ${{ matrix.task }} completada ===" >> ${{ matrix.task }}-output.txt
+          
+          cat ${{ matrix.task }}-output.txt
+      
+      - name: Upload resultado de ${{ matrix.task }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.task }}-result
+          path: ${{ matrix.task }}-output.txt
+
+  # Job 3: Analysis on system resources
+  system-analysis:
+    name: Análisis de Recursos del Sistema
+    runs-on: ubuntu-latest
+    needs: parallel-processing
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Análisis completo del sistema
+        run: |
+          echo "=== ANÁLISIS COMPLETO DEL SISTEMA ===" > system-analysis.txt
+          echo "" >> system-analysis.txt
+          
+          echo "1. INFORMACIÓN DEL PROCESADOR:" >> system-analysis.txt
+          lscpu >> system-analysis.txt
+          echo "" >> system-analysis.txt
+          
+          echo "2. INFORMACIÓN DE MEMORIA:" >> system-analysis.txt
+          free -h >> system-analysis.txt
+          echo "" >> system-analysis.txt
+          
+          echo "3. INFORMACIÓN DE DISCO:" >> system-analysis.txt
+          df -h >> system-analysis.txt
+          echo "" >> system-analysis.txt
+          
+          echo "4. PROCESOS ACTIVOS (TOP 10):" >> system-analysis.txt
+          ps aux --sort=-%mem | head -n 11 >> system-analysis.txt
+          echo "" >> system-analysis.txt
+          
+          echo "5. VARIABLES DE ENTORNO RELEVANTES:" >> system-analysis.txt
+          env | grep -E "PATH|HOME|USER|SHELL" >> system-analysis.txt
+          echo "" >> system-analysis.txt
+          
+          echo "6. INFORMACIÓN DE RED:" >> system-analysis.txt
+          ip addr show || ifconfig >> system-analysis.txt
+          
+          cat system-analysis.txt
+      
+      - name: Upload análisis del sistema
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-analysis
+          path: system-analysis.txt
+      
+      - name: Resumen de ejecución
+        run: |
+          echo "=========================================="
+          echo "✅ WORKFLOW COMPLETADO EXITOSAMENTE"
+          echo "=========================================="
+          echo "Jobs ejecutados:"
+          echo "  1. Build en Contenedor Docker"
+          echo "  2. Gestión de Procesos Paralelos (3 tareas)"
+          echo "  3. Análisis de Recursos del Sistema"
+          echo "=========================================="
+          echo "Artifacts generados:"
+          echo "  - container-info"
+          echo "  - task1-result"
+          echo "  - task2-result"
+          echo "  - task3-result"
+          echo "  - system-analysis"
+          echo "=========================================="
