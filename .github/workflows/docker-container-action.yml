@@ -1,0 +1,143 @@
+name: Docker Container Action
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  docker-workflow:
+    name: Construcción y Ejecución con Docker
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Construir imagen Docker
+        run: |
+          echo "=== Construyendo imagen Docker ==="
+          docker build -t app-so-avanzado:latest .
+          echo "✅ Imagen construida exitosamente"
+          
+          echo ""
+          echo "=== Información de la imagen ==="
+          docker images app-so-avanzado:latest
+          
+          echo ""
+          echo "=== Detalles de la imagen ==="
+          docker inspect app-so-avanzado:latest --format='Tamaño: {{.Size}} bytes'
+          docker inspect app-so-avanzado:latest --format='Arquitectura: {{.Architecture}}'
+          docker inspect app-so-avanzado:latest --format='OS: {{.Os}}'
+          docker inspect app-so-avanzado:latest --format='Creada: {{.Created}}'
+      
+      - name: Ejecutar contenedor en segundo plano
+        run: |
+          echo "=== Iniciando contenedor ==="
+          docker run -d -p 3000:3000 --name app-container app-so-avanzado:latest
+          
+          echo "✅ Contenedor iniciado"
+          echo ""
+          
+          echo "=== Esperando a que la aplicación inicie ==="
+          sleep 5
+          
+          echo "=== Verificando que el contenedor esté corriendo ==="
+          docker ps -a
+      
+      - name: Demostrar comunicación Host-Contenedor
+        run: |
+          echo "=== COMUNICACIÓN ENTRE HOST Y CONTENEDOR ==="
+          echo ""
+          
+          echo "1. Verificando conectividad HTTP desde el host:"
+          curl -s http://localhost:3000 || echo "❌ No se pudo conectar"
+          echo ""
+          
+          echo "2. Verificando endpoint /info:"
+          curl -s http://localhost:3000/info | python3 -m json.tool || echo "❌ Error"
+          echo ""
+          
+          echo "3. Ejecutando comando dentro del contenedor desde el host:"
+          docker exec app-container node --version
+          docker exec app-container npm --version
+          echo ""
+          
+          echo "4. Verificando variables de entorno del contenedor:"
+          docker exec app-container env | grep -E "NODE|PATH" | head -5
+          echo ""
+          
+          echo "5. Verificando sistema de archivos del contenedor:"
+          docker exec app-container ls -la /app
+          echo ""
+          
+          echo "✅ Comunicación Host-Contenedor verificada"
+      
+      - name: Monitorear recursos del contenedor
+        run: |
+          chmod +x monitor-resources.sh
+          ./monitor-resources.sh
+      
+      - name: Generar reporte de recursos
+        run: |
+          echo "=== REPORTE DE RECURSOS DEL CONTENEDOR ===" > container-resources-report.txt
+          echo "" >> container-resources-report.txt
+          
+          CONTAINER_ID=$(docker ps -q --filter "name=app-container")
+          
+          echo "INFORMACIÓN GENERAL:" >> container-resources-report.txt
+          docker inspect --format='Container ID: {{.Id}}' $CONTAINER_ID >> container-resources-report.txt
+          docker inspect --format='Imagen: {{.Config.Image}}' $CONTAINER_ID >> container-resources-report.txt
+          docker inspect --format='Hostname: {{.Config.Hostname}}' $CONTAINER_ID >> container-resources-report.txt
+          echo "" >> container-resources-report.txt
+          
+          echo "RECURSOS:" >> container-resources-report.txt
+          docker stats $CONTAINER_ID --no-stream >> container-resources-report.txt
+          echo "" >> container-resources-report.txt
+          
+          echo "RED:" >> container-resources-report.txt
+          docker inspect --format='IP Address: {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $CONTAINER_ID >> container-resources-report.txt
+          docker inspect --format='Ports: {{json .NetworkSettings.Ports}}' $CONTAINER_ID >> container-resources-report.txt
+          echo "" >> container-resources-report.txt
+          
+          echo "PROCESOS:" >> container-resources-report.txt
+          docker top $CONTAINER_ID >> container-resources-report.txt
+          echo "" >> container-resources-report.txt
+          
+          echo "LOGS (últimas 50 líneas):" >> container-resources-report.txt
+          docker logs $CONTAINER_ID --tail 50 >> container-resources-report.txt
+          
+          cat container-resources-report.txt
+      
+      - name: Upload reporte de recursos
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-resources-report
+          path: container-resources-report.txt
+      
+      - name: Detener y limpiar contenedor
+        if: always()
+        run: |
+          echo "=== Deteniendo contenedor ==="
+          docker stop app-container || true
+          docker rm app-container || true
+          
+          echo "=== Limpiando imagen ==="
+          docker rmi app-so-avanzado:latest || true
+          
+          echo "✅ Limpieza completada"
+      
+      - name: Resumen de ejecución
+        run: |
+          echo "=========================================="
+          echo "✅ WORKFLOW DOCKER COMPLETADO"
+          echo "=========================================="
+          echo "Tareas realizadas:"
+          echo "  ✓ Imagen Docker construida"
+          echo "  ✓ Contenedor ejecutado"
+          echo "  ✓ Comunicación Host-Contenedor demostrada"
+          echo "  ✓ Recursos monitoreados"
+          echo "  ✓ Reporte generado"
+          echo "=========================================="
