@@ -1,0 +1,32 @@
+name: Multi-OS Workflow
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Collect System Info
+        run: |
+          echo "=== Sistema Operativo ===" > system-info.txt
+          uname -a >> system-info.txt || echo "Windows System" >> system-info.txt
+          echo "=== Variables de Entorno ===" >> system-info.txt
+          env >> system-info.txt
+      
+      - name: Upload System Info
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-info-${{ matrix.os }}
+          path: system-info.txt
