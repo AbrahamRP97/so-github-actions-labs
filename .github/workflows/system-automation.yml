@@ -11,7 +11,6 @@ env:
   CUSTOM_VAR: "Variable personalizada del workflow"
 
 jobs:
-  # Job para Linux
   linux-automation:
     name: Automatización en Linux
     runs-on: ubuntu-latest
@@ -24,7 +23,7 @@ jobs:
         run: |
           chmod +x scripts/system-operations.sh
           chmod +x scripts/error-handler.sh
-          echo "✓ Permisos configurados"
+          echo "[OK] Permisos configurados"
       
       - name: Ejecutar operaciones del sistema
         env:
@@ -43,10 +42,10 @@ jobs:
         run: |
           echo "=== Verificando artifacts ==="
           if [ -d "./artifacts" ]; then
-            echo "✓ Carpeta artifacts encontrada"
+            echo "[OK] Carpeta artifacts encontrada"
             ls -lh ./artifacts/
           else
-            echo "❌ No se encontraron artifacts"
+            echo "[ERROR] No se encontraron artifacts"
             exit 1
           fi
       
@@ -60,13 +59,12 @@ jobs:
       - name: Resumen de ejecución Linux
         run: |
           echo "=========================================="
-          echo "✅ AUTOMATIZACIÓN LINUX COMPLETADA"
+          echo "[COMPLETADO] AUTOMATIZACION LINUX"
           echo "=========================================="
           echo "Artifacts generados:"
           ls -1 ./artifacts/ | sed 's/^/  - /'
           echo "=========================================="
 
-  # Job para Windows
   windows-automation:
     name: Automatización en Windows
     runs-on: windows-latest
@@ -88,10 +86,10 @@ jobs:
         run: |
           Write-Host "=== Verificando artifacts ===" -ForegroundColor Yellow
           if (Test-Path ".\artifacts") {
-            Write-Host "✓ Carpeta artifacts encontrada" -ForegroundColor Green
+            Write-Host "[OK] Carpeta artifacts encontrada" -ForegroundColor Green
             Get-ChildItem ".\artifacts" | Format-Table Name, Length
           } else {
-            Write-Host "❌ No se encontraron artifacts" -ForegroundColor Red
+            Write-Host "[ERROR] No se encontraron artifacts" -ForegroundColor Red
             exit 1
           }
       
@@ -106,13 +104,12 @@ jobs:
         shell: powershell
         run: |
           Write-Host "==========================================" -ForegroundColor Cyan
-          Write-Host "✅ AUTOMATIZACIÓN WINDOWS COMPLETADA" -ForegroundColor Green
+          Write-Host "[COMPLETADO] AUTOMATIZACION WINDOWS" -ForegroundColor Green
           Write-Host "==========================================" -ForegroundColor Cyan
           Write-Host "Artifacts generados:"
           Get-ChildItem ".\artifacts" | ForEach-Object { Write-Host "  - $($_.Name)" }
           Write-Host "==========================================" -ForegroundColor Cyan
 
-  # Job para macOS
   macos-automation:
     name: Automatización en macOS
     runs-on: macos-latest
@@ -125,7 +122,7 @@ jobs:
         run: |
           chmod +x scripts/system-operations.sh
           chmod +x scripts/error-handler.sh
-          echo "✓ Permisos configurados"
+          echo "[OK] Permisos configurados"
       
       - name: Ejecutar operaciones del sistema
         env:
@@ -143,10 +140,10 @@ jobs:
         run: |
           echo "=== Verificando artifacts ==="
           if [ -d "./artifacts" ]; then
-            echo "✓ Carpeta artifacts encontrada"
+            echo "[OK] Carpeta artifacts encontrada"
             ls -lh ./artifacts/
           else
-            echo "❌ No se encontraron artifacts"
+            echo "[ERROR] No se encontraron artifacts"
             exit 1
           fi
       
@@ -160,13 +157,12 @@ jobs:
       - name: Resumen de ejecución macOS
         run: |
           echo "=========================================="
-          echo "✅ AUTOMATIZACIÓN MACOS COMPLETADA"
+          echo "[COMPLETADO] AUTOMATIZACION MACOS"
           echo "=========================================="
           echo "Artifacts generados:"
           ls -1 ./artifacts/ | sed 's/^/  - /'
           echo "=========================================="
 
-  # Job de análisis comparativo
   comparative-analysis:
     name: Análisis Comparativo Multi-OS
     runs-on: ubuntu-latest
@@ -193,7 +189,7 @@ jobs:
       
       - name: Generar análisis comparativo
         run: |
-          echo "=== ANÁLISIS COMPARATIVO MULTI-OS ===" > comparative-analysis.txt
+          echo "=== ANALISIS COMPARATIVO MULTI-OS ===" > comparative-analysis.txt
           echo "" >> comparative-analysis.txt
           echo "Fecha: $(date)" >> comparative-analysis.txt
           echo "" >> comparative-analysis.txt
@@ -218,9 +214,9 @@ jobs:
           
           echo "=== RESUMEN ===" >> comparative-analysis.txt
           echo "Total de archivos generados:" >> comparative-analysis.txt
-          echo "  Linux: $(ls ./reports/linux | wc -l)" >> comparative-analysis.txt
-          echo "  Windows: $(ls ./reports/windows | wc -l)" >> comparative-analysis.txt
-          echo "  macOS: $(ls ./reports/macos | wc -l)" >> comparative-analysis.txt
+          echo "  Linux: $(ls ./reports/linux 2>/dev/null | wc -l)" >> comparative-analysis.txt
+          echo "  Windows: $(ls ./reports/windows 2>/dev/null | wc -l)" >> comparative-analysis.txt
+          echo "  macOS: $(ls ./reports/macos 2>/dev/null | wc -l)" >> comparative-analysis.txt
           
           cat comparative-analysis.txt
       
@@ -233,13 +229,13 @@ jobs:
       - name: Resumen final
         run: |
           echo "=============================================="
-          echo "✅ AUTOMATIZACIÓN MULTI-OS COMPLETADA"
+          echo "[COMPLETADO] AUTOMATIZACION MULTI-OS"
           echo "=============================================="
           echo "Jobs ejecutados: 4"
-          echo "  ✓ Linux"
-          echo "  ✓ Windows"
-          echo "  ✓ macOS"
-          echo "  ✓ Análisis Comparativo"
+          echo "  - Linux"
+          echo "  - Windows"
+          echo "  - macOS"
+          echo "  - Analisis Comparativo"
           echo ""
           echo "Artifacts totales: 4"
           echo "  - linux-system-reports"
