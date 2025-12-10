@@ -1,0 +1,249 @@
+name: Scripts del Sistema y Automatización
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  CUSTOM_VAR: "Variable personalizada del workflow"
+
+jobs:
+  # Job para Linux
+  linux-automation:
+    name: Automatización en Linux
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Configurar permisos de scripts
+        run: |
+          chmod +x scripts/system-operations.sh
+          chmod +x scripts/error-handler.sh
+          echo "✓ Permisos configurados"
+      
+      - name: Ejecutar operaciones del sistema
+        env:
+          SECRET_KEY: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Iniciando operaciones del sistema en Linux ==="
+          ./scripts/system-operations.sh
+        continue-on-error: false
+      
+      - name: Ejecutar manejo de errores
+        run: |
+          echo "=== Probando manejo de errores ==="
+          ./scripts/error-handler.sh
+      
+      - name: Verificar artifacts generados
+        run: |
+          echo "=== Verificando artifacts ==="
+          if [ -d "./artifacts" ]; then
+            echo "✓ Carpeta artifacts encontrada"
+            ls -lh ./artifacts/
+          else
+            echo "❌ No se encontraron artifacts"
+            exit 1
+          fi
+      
+      - name: Upload artifacts de Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-system-reports
+          path: ./artifacts/
+          retention-days: 30
+      
+      - name: Resumen de ejecución Linux
+        run: |
+          echo "=========================================="
+          echo "✅ AUTOMATIZACIÓN LINUX COMPLETADA"
+          echo "=========================================="
+          echo "Artifacts generados:"
+          ls -1 ./artifacts/ | sed 's/^/  - /'
+          echo "=========================================="
+
+  # Job para Windows
+  windows-automation:
+    name: Automatización en Windows
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Ejecutar operaciones del sistema
+        env:
+          SECRET_KEY: ${{ secrets.GITHUB_TOKEN }}
+        shell: powershell
+        run: |
+          Write-Host "=== Iniciando operaciones del sistema en Windows ===" -ForegroundColor Cyan
+          .\scripts\system-operations.ps1
+      
+      - name: Verificar artifacts generados
+        shell: powershell
+        run: |
+          Write-Host "=== Verificando artifacts ===" -ForegroundColor Yellow
+          if (Test-Path ".\artifacts") {
+            Write-Host "✓ Carpeta artifacts encontrada" -ForegroundColor Green
+            Get-ChildItem ".\artifacts" | Format-Table Name, Length
+          } else {
+            Write-Host "❌ No se encontraron artifacts" -ForegroundColor Red
+            exit 1
+          }
+      
+      - name: Upload artifacts de Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-system-reports
+          path: ./artifacts/
+          retention-days: 30
+      
+      - name: Resumen de ejecución Windows
+        shell: powershell
+        run: |
+          Write-Host "==========================================" -ForegroundColor Cyan
+          Write-Host "✅ AUTOMATIZACIÓN WINDOWS COMPLETADA" -ForegroundColor Green
+          Write-Host "==========================================" -ForegroundColor Cyan
+          Write-Host "Artifacts generados:"
+          Get-ChildItem ".\artifacts" | ForEach-Object { Write-Host "  - $($_.Name)" }
+          Write-Host "==========================================" -ForegroundColor Cyan
+
+  # Job para macOS
+  macos-automation:
+    name: Automatización en macOS
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Configurar permisos de scripts
+        run: |
+          chmod +x scripts/system-operations.sh
+          chmod +x scripts/error-handler.sh
+          echo "✓ Permisos configurados"
+      
+      - name: Ejecutar operaciones del sistema
+        env:
+          SECRET_KEY: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== Iniciando operaciones del sistema en macOS ==="
+          ./scripts/system-operations.sh
+      
+      - name: Ejecutar manejo de errores
+        run: |
+          echo "=== Probando manejo de errores ==="
+          ./scripts/error-handler.sh
+      
+      - name: Verificar artifacts generados
+        run: |
+          echo "=== Verificando artifacts ==="
+          if [ -d "./artifacts" ]; then
+            echo "✓ Carpeta artifacts encontrada"
+            ls -lh ./artifacts/
+          else
+            echo "❌ No se encontraron artifacts"
+            exit 1
+          fi
+      
+      - name: Upload artifacts de macOS
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-system-reports
+          path: ./artifacts/
+          retention-days: 30
+      
+      - name: Resumen de ejecución macOS
+        run: |
+          echo "=========================================="
+          echo "✅ AUTOMATIZACIÓN MACOS COMPLETADA"
+          echo "=========================================="
+          echo "Artifacts generados:"
+          ls -1 ./artifacts/ | sed 's/^/  - /'
+          echo "=========================================="
+
+  # Job de análisis comparativo
+  comparative-analysis:
+    name: Análisis Comparativo Multi-OS
+    runs-on: ubuntu-latest
+    needs: [linux-automation, windows-automation, macos-automation]
+    
+    steps:
+      - name: Download artifacts de Linux
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-system-reports
+          path: ./reports/linux
+      
+      - name: Download artifacts de Windows
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-system-reports
+          path: ./reports/windows
+      
+      - name: Download artifacts de macOS
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-system-reports
+          path: ./reports/macos
+      
+      - name: Generar análisis comparativo
+        run: |
+          echo "=== ANÁLISIS COMPARATIVO MULTI-OS ===" > comparative-analysis.txt
+          echo "" >> comparative-analysis.txt
+          echo "Fecha: $(date)" >> comparative-analysis.txt
+          echo "" >> comparative-analysis.txt
+          
+          echo "--- LINUX ---" >> comparative-analysis.txt
+          if [ -f "./reports/linux/system-report.txt" ]; then
+            head -20 ./reports/linux/system-report.txt >> comparative-analysis.txt
+          fi
+          echo "" >> comparative-analysis.txt
+          
+          echo "--- WINDOWS ---" >> comparative-analysis.txt
+          if [ -f "./reports/windows/system-report.txt" ]; then
+            head -20 ./reports/windows/system-report.txt >> comparative-analysis.txt
+          fi
+          echo "" >> comparative-analysis.txt
+          
+          echo "--- MACOS ---" >> comparative-analysis.txt
+          if [ -f "./reports/macos/system-report.txt" ]; then
+            head -20 ./reports/macos/system-report.txt >> comparative-analysis.txt
+          fi
+          echo "" >> comparative-analysis.txt
+          
+          echo "=== RESUMEN ===" >> comparative-analysis.txt
+          echo "Total de archivos generados:" >> comparative-analysis.txt
+          echo "  Linux: $(ls ./reports/linux | wc -l)" >> comparative-analysis.txt
+          echo "  Windows: $(ls ./reports/windows | wc -l)" >> comparative-analysis.txt
+          echo "  macOS: $(ls ./reports/macos | wc -l)" >> comparative-analysis.txt
+          
+          cat comparative-analysis.txt
+      
+      - name: Upload análisis comparativo
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparative-analysis
+          path: comparative-analysis.txt
+      
+      - name: Resumen final
+        run: |
+          echo "=============================================="
+          echo "✅ AUTOMATIZACIÓN MULTI-OS COMPLETADA"
+          echo "=============================================="
+          echo "Jobs ejecutados: 4"
+          echo "  ✓ Linux"
+          echo "  ✓ Windows"
+          echo "  ✓ macOS"
+          echo "  ✓ Análisis Comparativo"
+          echo ""
+          echo "Artifacts totales: 4"
+          echo "  - linux-system-reports"
+          echo "  - windows-system-reports"
+          echo "  - macos-system-reports"
+          echo "  - comparative-analysis"
+          echo "=============================================="
