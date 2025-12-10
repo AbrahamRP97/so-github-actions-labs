@@ -1,14 +1,17 @@
 {
   "name": "app",
   "version": "1.0.0",
-  "description": "",
+  "description": "Aplicación base para CI/CD con GitHub Actions",
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "jest"
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "lint": "echo 'Linting simulated (no ESLint configured)'",
+    "build": "echo 'Build simulated (no build step required for Express)'"
   },
   "keywords": [],
-  "author": "",
+  "author": "Abraham Rivera",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
