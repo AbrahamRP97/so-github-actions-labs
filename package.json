@@ -5,9 +5,16 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "echo \"Ejecutando pruebas...\" && exit 0"
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "lint": "echo 'Linting simulated (no ESLint configured)'",
+    "build": "echo 'Build simulated (no build step required for Express)'"
   },
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.1.4"
   }
 }
