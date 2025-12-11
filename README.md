@@ -1,4 +1,5 @@
-Proyecto CI/CD Multi-Plataforma
-![CI - Continuous Integration](https://github.com/AbrahamRP97/so-github-actions-labs/actions/workflows/ci.yml/badge.svg)
-![Security Scan](https://github.com/AbrahamRP97/so-github-actions-labs/actions/workflows/security-scan.yml/badge.svg)
-![Release](https://github.com/AbrahamRP97/so-github-actions-labs/actions/workflows/release.yml/badge.svg)
+![CI Pipeline](https://github.com/AbrahamRP97/so-github-actions-labs/actions/workflows/ci-pipeline.yml/badge.svg)
+![CI (alternate)](https://github.com/AbrahamRP97/so-github-actions-labs/actions/workflows/ci.yml/badge.svg)
+![Docker Action](https://github.com/AbrahamRP97/so-github-actions-labs/actions/workflows/docker-container-action.yml/badge.svg)
+![Multi-OS Test](https://github.com/AbrahamRP97/so-github-actions-labs/actions/workflows/multi-os-test.yml/badge.svg)
+![System Automation](https://github.com/AbrahamRP97/so-github-actions-labs/actions/workflows/system-automation.yml/badge.svg)
